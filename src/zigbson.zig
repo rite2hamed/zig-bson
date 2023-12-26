@@ -11,6 +11,7 @@ const testing = std.testing;
 
 pub fn main() !void {
     const oid = ObjectId{ .timestamp = 1, .counter = 1, .random1 = 1, .random2 = 2 };
+
     std.debug.print("{any}\n", .{oid});
     std.debug.print("{s}\n", .{oid.toHex()});
     std.debug.print("Salaam world!\n", .{});
