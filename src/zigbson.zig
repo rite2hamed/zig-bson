@@ -15,6 +15,10 @@ pub fn main() !void {
     std.debug.print("{any}\n", .{oid});
     std.debug.print("{s}\n", .{oid.toHex()});
     std.debug.print("Salaam world!\n", .{});
+
+    const op = ObjectId.ObjectIdOptions.Default();
+    // const op = ObjectId.TS;
+    std.debug.print("Options = {any}\n", .{op});
 }
 
 test "instantiate object id" {
