@@ -25,6 +25,7 @@ fn getMachineId() u24 {
 }
 
 var PID: ?u16 = null;
+/// Gets process id
 fn getPid() u16 {
     if (PID == null) {
         std.log.info("Instantiating PID\n", .{});
@@ -45,34 +46,22 @@ fn getCounter() u24 {
 }
 
 const rand = std.crypto.random;
+// const rand = prng.random();
 
-pub const ObjectIdOptions = struct {
-    pub fn Default() ObjectIdOptions {
-        std.debug.print("MACHINE-ID = {}\n", .{getMachineId()});
-        std.debug.print("PID-ID = {}\n", .{getPid()});
-        std.debug.print("COUNTER = {}\n", .{getCounter()});
+/// new up an instance of Object Id.
+pub fn new() ObjectId {
+    return .{
+        .timestamp = std.time.timestamp(),
+        .machineId = getMachineId(),
+        .pid = getPid(),
+        .counter = getCounter(),
+    };
+}
 
-        std.debug.print("MACHINE-ID = {}\n", .{getMachineId()});
-        std.debug.print("PID-ID = {}\n", .{getPid()});
-        std.debug.print("COUNTER = {}\n", .{getCounter()});
-
-        return .{
-            .timestamp = std.time.timestamp(),
-            .random1 = rand.int(u32),
-            .random2 = rand.int(u16),
-            .counter = 1,
-        };
-    }
-    timestamp: i64,
-    random1: u32,
-    random2: u16,
-    counter: u32,
-};
-
-timestamp: i64, //time in seconds since UNIX epoch (4 bytes)
-random1: u24, // 3 byte random
-random2: u16, // 2 byte random
-counter: u24, //3 byte counter
+timestamp: i64, //time in seconds since UNIX epoch (4 bytes) in BE
+machineId: u24, // 3 byte random
+pid: u16, // 2 byte random
+counter: u24, //3 byte counter in BE
 
 pub fn toHex(self: *const ObjectId) []const u8 {
     _ = self;
