@@ -18,6 +18,8 @@ pub fn main() !void {
     std.time.sleep(2 * std.time.ns_per_s);
     const op2 = ObjectId.new();
     std.debug.print("Options = {any}\n", .{op2});
+    std.debug.print("op= {s}\n", .{op.toHex()});
+    std.debug.print("op2={s}\n", .{op2.toHex()});
 }
 
 test "instantiate object id" {
