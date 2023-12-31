@@ -39,7 +39,9 @@ var COUNTER: ?u24 = null;
 fn getCounter() u24 {
     if (COUNTER == null) {
         std.log.info("Intantiating counter", .{});
-        COUNTER = rand.int(u24);
+        // COUNTER = rand.int(u24);
+
+        COUNTER = rand.intRangeLessThan(u24, 0, 0xffffff);
     }
     COUNTER = (COUNTER.? + 1) % 0xFFFFFF;
     return COUNTER.?;
@@ -64,6 +66,8 @@ pid: u16, // 2 byte random
 counter: u24, //3 byte counter in BE
 
 pub fn toHex(self: *const ObjectId) []const u8 {
-    _ = self;
-    return "to hex called";
+    var buffer: [24]u8 = undefined;
+    const buf = buffer[0..];
+    const formatted = std.fmt.bufPrint(buf, "{x}{x:0>6}{x:0>4}{x:0>6}", .{ self.timestamp, self.machineId, self.pid, self.counter }) catch unreachable;
+    return formatted;
 }
