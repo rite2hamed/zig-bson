@@ -1,25 +1,44 @@
 const std = @import("std");
 
-//Allocator alias
-const Allocator = std.mem.Allocator;
-
 pub const ObjectId = @import("ObjectId.zig");
+pub const BsonDocument = @import("BsonDocument.zig");
 
-//End Of Object
-const EOO = 0x00;
 const testing = std.testing;
 
 pub fn main() !void {
     std.debug.print("Salaam world!\n", .{});
 
-    const op = ObjectId.new();
-    // const op = ObjectId.TS;
-    std.debug.print("Options = {any}\n", .{op});
-    std.time.sleep(2 * std.time.ns_per_s);
-    const op2 = ObjectId.new();
-    std.debug.print("Options = {any}\n", .{op2});
-    std.debug.print("op= {s}\n", .{op.toHex()});
-    std.debug.print("op2={s}\n", .{op2.toHex()});
+    // const op = ObjectId.new();
+    // // const op = ObjectId.TS;
+    // std.debug.print("Options = {any}\n", .{op});
+    // std.time.sleep(2 * std.time.ns_per_s);
+    // const op2 = ObjectId.new();
+    // std.debug.print("Options = {any}\n", .{op2});
+    // std.debug.print("op= {s}\n", .{op.toHex()});
+    // std.debug.print("op2={s}\n", .{op2.toHex()});
+    const file_name = "../samples/nested-obj.bson";
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+
+    const fs = try std.fs.cwd().openFile(file_name, .{});
+    defer fs.close();
+
+    const size = (try fs.stat()).size;
+    const buffer = try fs.readToEndAlloc(allocator, size);
+    defer allocator.free(buffer);
+    errdefer allocator.free(buffer);
+    std.debug.print("{any}\n", .{buffer});
+    var doc = BsonDocument.init(allocator);
+    defer doc.deinit();
+    const temp: []const u8 = buffer[0..];
+    var buf: std.io.FixedBufferStream([]const u8) = std.io.fixedBufferStream(temp);
+    try doc.decode(buf.reader());
+    var it = doc.map.iterator();
+    while (it.next()) |e| {
+        std.debug.print("{s} => {any}\n", .{ e.key_ptr.*, e.value_ptr });
+    }
 }
 
 test "instantiate object id" {

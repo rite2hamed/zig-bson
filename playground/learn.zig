@@ -31,4 +31,8 @@ pub fn main() !void {
 
     // std.debug.print("{any}\n", .{hexTable.items});
     // std.debug.print("{d}\n", .{hexTable.items.len});
+    var buffer: [32]u8 = undefined;
+    const val: i64 = 1;
+    const buffered = try std.fmt.bufPrint(&buffer, "{x:0>20}", .{val});
+    std.debug.print("{s}\n", .{buffered});
 }
