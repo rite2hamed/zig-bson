@@ -97,7 +97,7 @@ pub fn encode(self: *const ObjectId, writer: ByteWriter) BSONError!void {
     try writer.writeByte(int0(self.counter));
 }
 
-pub fn decode(reader: ByteReader) BSONError!ObjectId {
+pub fn decode(reader: *ByteReader) BSONError!ObjectId {
     const ts = makeInt(try reader.readByte(), try reader.readByte(), try reader.readByte(), try reader.readByte());
     const machineId: u24 = @intCast(makeInt(0, try reader.readByte(), try reader.readByte(), try reader.readByte()));
     const pid = makeShort(try reader.readByte(), try reader.readByte());

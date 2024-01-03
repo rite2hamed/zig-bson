@@ -34,7 +34,8 @@ pub fn main() !void {
     defer doc.deinit();
     const temp: []const u8 = buffer[0..];
     var buf: std.io.FixedBufferStream([]const u8) = std.io.fixedBufferStream(temp);
-    try doc.decode(buf.reader());
+    var reader = buf.reader();
+    try doc.decode(&reader);
     var it = doc.map.iterator();
     while (it.next()) |e| {
         std.debug.print("{s} => {any}\n", .{ e.key_ptr.*, e.value_ptr });

@@ -93,9 +93,8 @@ pub const BSONVariant = union(BSONElement) {
     }
 
     ///decodes BsonVariant from tag and reader
-    pub fn decode(alloc: Allocator, tag: u8, reader: ByteReader) BSONError!BSONVariant {
+    pub fn decode(alloc: Allocator, tag: u8, reader: *ByteReader) BSONError!BSONVariant {
         const e: BSONElement = @enumFromInt(tag);
-        std.log.info("parsed element = {any}", .{e});
         const variant = switch (e) {
             .string => try readString(reader),
             .int32 => try readInt32(reader),
@@ -162,80 +161,70 @@ pub const BSONVariant = union(BSONElement) {
     }
 
     //private methods
-    fn readString(reader: ByteReader) BSONError!BSONVariant {
+    fn readString(reader: *ByteReader) BSONError!BSONVariant {
         const length = try reader.readIntLittle(i32);
         var num_bytes: u64 = @intCast(length);
-        std.log.info("string len = {d}", .{length});
         const start = reader.context.pos;
         try reader.skipBytes(num_bytes, .{});
         const end = reader.context.pos - 1; //skip EOS
         const bytes = @constCast(reader.context.buffer[start..end]);
-        std.log.info("string value = {s} [{d}]", .{ bytes, bytes.len });
         return BSONVariant{ .string = bytes };
     }
 
-    fn readInt32(reader: ByteReader) BSONError!BSONVariant {
+    fn readInt32(reader: *ByteReader) BSONError!BSONVariant {
         const i = try reader.readIntLittle(i32);
-        std.log.info("read int32 = {d}", .{i});
         return BSONVariant{ .int32 = i };
     }
 
-    fn readInt64(reader: ByteReader) BSONError!BSONVariant {
+    fn readInt64(reader: *ByteReader) BSONError!BSONVariant {
         const i = try reader.readIntLittle(i64);
-        std.log.info("read int64 = {d}", .{i});
         return BSONVariant{ .int64 = i };
     }
 
-    fn readDateTimeUTC(reader: ByteReader) BSONError!BSONVariant {
+    fn readDateTimeUTC(reader: *ByteReader) BSONError!BSONVariant {
         const i = try reader.readIntLittle(i64);
-        std.log.info("read int64 = {d}", .{i});
         return BSONVariant{ .datetime_utc = i };
     }
 
-    //readDateTimeUTC
-
-    fn readUInt64(reader: ByteReader) BSONError!BSONVariant {
+    fn readUInt64(reader: *ByteReader) BSONError!BSONVariant {
         const u = try reader.readIntLittle(u64);
-        std.log.info("read uint64 = {d}", .{u});
         return BSONVariant{ .uint64 = u };
     }
 
-    fn readDouble(reader: ByteReader) BSONError!BSONVariant {
+    fn readDouble(reader: *ByteReader) BSONError!BSONVariant {
         const raw = try reader.readIntLittle(u64);
         const d: f64 = @bitCast(raw);
-        std.log.info("read double = {any}", .{d});
         return BSONVariant{ .double = d };
     }
 
-    fn readDecimal(reader: ByteReader) BSONError!BSONVariant {
+    fn readDecimal(reader: *ByteReader) BSONError!BSONVariant {
         const raw = try reader.readIntLittle(u128);
         const dd: f128 = @bitCast(raw);
-        std.log.info("read decimal = {any}", .{dd});
         return BSONVariant{ .decimal128 = dd };
     }
 
-    fn readObjectId(reader: ByteReader) BSONError!BSONVariant {
+    fn readObjectId(reader: *ByteReader) BSONError!BSONVariant {
         const oid = try ObjectId.decode(reader);
         return BSONVariant{ .oid = oid };
     }
 
-    fn readBoolean(reader: ByteReader) BSONError!BSONVariant {
+    fn readBoolean(reader: *ByteReader) BSONError!BSONVariant {
         const b = try reader.readByte();
-        std.log.info("read boolean = {}", .{b});
         return BSONVariant{ .boolean = (b == TRUE) };
     }
 
-    fn readDocument(alloc: Allocator, reader: ByteReader) BSONError!BSONVariant {
+    fn readDocument(alloc: Allocator, reader: *ByteReader) BSONError!BSONVariant {
+        std.log.info("readDoc pos={}", .{reader.context.pos});
         var doc = BSONDocument.init(alloc);
+        doc.length += @intCast(reader.context.pos);
         try doc.decode(reader);
-        std.log.info("doc = {any}", .{doc});
         return BSONVariant{ .embeded_doc = doc };
     }
 
-    fn readArray(alloc: Allocator, reader: ByteReader) BSONError!BSONVariant {
+    fn readArray(alloc: Allocator, reader: *ByteReader) BSONError!BSONVariant {
         var doc = BSONDocument.init(alloc);
+        doc.length += @intCast(reader.context.pos);
         try doc.decode(reader);
-        std.log.info("array = {any}", .{doc});
         return BSONVariant{ .array = doc };
     }
 };

@@ -13,6 +13,7 @@ const ByteWriter = std.io.FixedBufferStream([]const u8).Writer;
 const BsonDocument = @This();
 
 map: std.StringArrayHashMap(BsonVariant),
+length: i32 = 0,
 
 pub fn init(alloc: std.mem.Allocator) BsonDocument {
     return .{
@@ -64,32 +65,23 @@ pub fn encode(self: *const BsonDocument, writer: ByteWriter) BSONError!void {
     try writer.writeByte(EOO);
 }
 
-pub fn decode(self: *BsonDocument, reader: ByteReader) BSONError!void {
+pub fn decode(self: *BsonDocument, reader: *ByteReader) BSONError!void {
     //read document length
-    const length = try reader.readIntLittle(i32);
-    std.log.info("doc length = {}", .{length});
-    var skipBack: u32 = 0;
-    while (reader.context.pos < length - 1) {
+    self.length += try reader.readIntLittle(i32);
+    while (reader.context.pos < self.length - 1) {
         //read tag
         const tag = try reader.readByte();
-        std.log.info("read tag: {d}", .{tag});
         //read field name
         const start = reader.context.pos;
         try reader.skipUntilDelimiterOrEof(EOO);
         const end = reader.context.pos - 1;
         const field = @constCast(reader.context.buffer[start..end]);
-        std.log.info("field = {s} [{d}]", .{ field, field.len });
         //read variant
         const variant = try BsonVariant.decode(self.map.allocator, tag, reader);
-        std.log.info("adding variant = {?} into map", .{variant});
         try self.map.put(field, variant);
-        const activeField = std.meta.activeTag(variant);
-        if (activeField == .array or activeField == .embeded_doc)
-            skipBack += 1;
     }
-    if (skipBack == 0) {
-        const eoo = try reader.readByte();
-        _ = eoo; //read EOO
-        // if (eoo != EOO) @panic("last read byte isn't EOO");
+    const eoo = try reader.readByte(); //read EOO
+    if (eoo != EOO) {
+        @panic("last read byte isn't EOO");
     }
 }
