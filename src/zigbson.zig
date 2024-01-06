@@ -29,17 +29,14 @@ pub fn main() !void {
     const buffer = try fs.readToEndAlloc(allocator, size);
     defer allocator.free(buffer);
     errdefer allocator.free(buffer);
-    std.debug.print("{any}\n", .{buffer});
+    // std.debug.print("{any}\n", .{buffer});
     var doc = BsonDocument.init(allocator);
     defer doc.deinit();
     const temp: []const u8 = buffer[0..];
     var buf: std.io.FixedBufferStream([]const u8) = std.io.fixedBufferStream(temp);
     var reader = buf.reader();
     try doc.decode(&reader);
-    var it = doc.map.iterator();
-    while (it.next()) |e| {
-        std.debug.print("{s} => {any}\n", .{ e.key_ptr.*, e.value_ptr });
-    }
+    doc.print(null);
 }
 
 test "instantiate object id" {

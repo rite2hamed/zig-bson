@@ -22,7 +22,14 @@ pub fn init(alloc: std.mem.Allocator) BsonDocument {
 }
 
 pub fn deinit(self: *BsonDocument) void {
-    //TODO loop over all they keys and free them before deiniting map itself
+    //loop over all they keys and free them before deiniting map itself
+    var it = self.map.iterator();
+    while (it.next()) |e| {
+        switch (e.value_ptr.*) {
+            .array, .embeded_doc => |*doc| doc.deinit(),
+            else => {},
+        }
+    }
     self.map.deinit();
     self.* = undefined;
 }
@@ -84,4 +91,30 @@ pub fn decode(self: *BsonDocument, reader: *ByteReader) BSONError!void {
     if (eoo != EOO) {
         @panic("last read byte isn't EOO");
     }
+}
+
+pub fn print(self: *const BsonDocument, indent: ?usize) void {
+    std.debug.print("{s} //doc len {d}\n", .{ "{", self.len() });
+    var iv = if (indent) |v| v + 2 else 2;
+    for (self.map.keys(), 0..) |key, index| {
+        var i: usize = 0;
+        while (i < iv) : (i += 1) {
+            std.debug.print(" ", .{});
+        }
+        const value = self.map.get(key).?;
+        const tag = @tagName(value);
+        const tagValue = @intFromEnum(value);
+        std.debug.print("[0x{x:0>2}] {s} \"{s}\": ", .{ tagValue, tag, key });
+        value.print(iv);
+        if (index < self.map.count() - 1) {
+            std.debug.print(",\n", .{});
+        }
+    }
+    iv -= 2;
+    std.debug.print("\n", .{});
+    var i: usize = 0;
+    while (i < iv) : (i += 1) {
+        std.debug.print(" ", .{});
+    }
+    std.debug.print("{s} 0x{x:0>2} //EOO\n", .{ "}", EOO });
 }

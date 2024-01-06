@@ -160,6 +160,19 @@ pub const BSONVariant = union(BSONElement) {
         }
     }
 
+    pub fn print(self: *const BSONVariant, indent: ?usize) void {
+        switch (self.*) {
+            .string => |str| std.debug.print("[{d}]\"{s}\"", .{ str.len + 1, str }),
+            .embeded_doc, .array => |doc| doc.print(indent),
+            .int32, .int64, .datetime_utc => |i| std.debug.print("{d}", .{i}),
+            .oid => |oid| std.debug.print("\"{s}\"", .{oid.toHex()}),
+            .boolean => |b| std.debug.print("{s}", .{if (b) "TRUE" else "FALSE"}),
+            .null => |_| std.debug.print("NULL", .{}),
+            .double => |d| std.debug.print("{d}", .{d}),
+            else => std.debug.print("yet to be implemented", .{}),
+        }
+    }
+
     //private methods
     fn readString(reader: *ByteReader) BSONError!BSONVariant {
         const length = try reader.readIntLittle(i32);
@@ -214,7 +227,6 @@ pub const BSONVariant = union(BSONElement) {
     }
 
     fn readDocument(alloc: Allocator, reader: *ByteReader) BSONError!BSONVariant {
-        std.log.info("readDoc pos={}", .{reader.context.pos});
         var doc = BSONDocument.init(alloc);
         doc.length += @intCast(reader.context.pos);
         try doc.decode(reader);
