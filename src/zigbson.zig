@@ -2,6 +2,7 @@ const std = @import("std");
 
 pub const ObjectId = @import("ObjectId.zig");
 pub const BsonDocument = @import("BsonDocument.zig");
+pub const BsonVariant = @import("Globals.zig").BSONVariant;
 
 const testing = std.testing;
 
@@ -37,6 +38,14 @@ pub fn main() !void {
     var reader = buf.reader();
     try doc.decode(&reader);
     doc.print(null);
+
+    var person = BsonDocument.init(allocator);
+    defer person.deinit();
+
+    try person.map.put("firstName", BsonVariant.fromString("Hamed"));
+    try person.map.put("lastName", BsonVariant.fromString("Mohammed"));
+    try person.map.put("age", BsonVariant.fromUInt64(47));
+    person.print(null);
 }
 
 test "instantiate object id" {

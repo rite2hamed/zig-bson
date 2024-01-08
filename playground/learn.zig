@@ -1,5 +1,22 @@
 const std = @import("std");
 
+const Person = struct {
+    firstname: []const u8,
+    lastname: []const u8,
+    fullname: [100]u8 = undefined,
+
+    pub fn init(firstname: []const u8, lastname: []const u8) Person {
+        return .{ .firstname = firstname, .lastname = lastname };
+    }
+
+    pub fn fullName(self: *Person) []const u8 {
+        const buf = self.fullname[0..]; //stack allocated slice
+        std.debug.print("\n{any}|{d}\n", .{ buf, buf.len });
+        const formatted = std.fmt.bufPrint(buf, "{s} {s}", .{ self.firstname, self.lastname }) catch "";
+        return self.fullname[0..formatted.len];
+    }
+};
+
 pub fn main() !void {
     const x: u24 = 15;
     const maxValue = std.math.maxInt(u24);
@@ -35,4 +52,9 @@ pub fn main() !void {
     const val: i64 = 1;
     const buffered = try std.fmt.bufPrint(&buffer, "{x:0>20}", .{val});
     std.debug.print("{s}\n", .{buffered});
+
+    var hamed = Person.init("Hamed", "Mohammed");
+    std.debug.print("{any}\n", .{hamed});
+    std.debug.print("{s}\n", .{hamed.fullName()});
+    std.debug.print("{any}\n", .{hamed});
 }

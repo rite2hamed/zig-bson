@@ -69,7 +69,7 @@ pub const BSONVariant = union(BSONElement) {
     max_key,
 
     /// returns the length of the BSON variant
-    pub fn len(self: *BSONVariant) i32 {
+    pub fn len(self: *const BSONVariant) i32 {
         return switch (self.*) {
             .string => |value| {
                 const l: i32 = @intCast(value.len);
@@ -162,15 +162,57 @@ pub const BSONVariant = union(BSONElement) {
 
     pub fn print(self: *const BSONVariant, indent: ?usize) void {
         switch (self.*) {
-            .string => |str| std.debug.print("[{d}]\"{s}\"", .{ str.len + 1, str }),
+            .string => |str| std.debug.print("\"{s}\"", .{str}),
             .embeded_doc, .array => |doc| doc.print(indent),
             .int32, .int64, .datetime_utc => |i| std.debug.print("{d}", .{i}),
+            .uint64 => |i| std.debug.print("{d}", .{i}),
             .oid => |oid| std.debug.print("\"{s}\"", .{oid.toHex()}),
             .boolean => |b| std.debug.print("{s}", .{if (b) "TRUE" else "FALSE"}),
             .null => |_| std.debug.print("NULL", .{}),
             .double => |d| std.debug.print("{d}", .{d}),
             else => std.debug.print("yet to be implemented", .{}),
         }
+        std.debug.print(" // [{d}]", .{self.len()});
+    }
+
+    pub fn fromDouble(d: f64) BSONVariant {
+        return .{ .double = d };
+    }
+
+    pub fn fromString(str: []const u8) BSONVariant {
+        return .{ .string = str };
+    }
+
+    pub fn fromBsonDocument(doc: BSONDocument) BSONVariant {
+        return .{ .embeded_doc = doc };
+    }
+
+    pub fn fromObjectId(oid: ObjectId) BSONVariant {
+        return .{ .oid = oid };
+    }
+
+    pub fn fromBoolean(b: bool) BSONVariant {
+        return .{ .boolean = b };
+    }
+
+    pub fn fromNull() BSONVariant {
+        return .{ .null = {} };
+    }
+
+    pub fn fromInt32(i: i32) BSONVariant {
+        return .{ .int32 = i };
+    }
+
+    pub fn fromInt64(i: i64) BSONVariant {
+        return .{ .int64 = i };
+    }
+
+    pub fn fromUInt64(i: u64) BSONVariant {
+        return .{ .uint64 = i };
+    }
+
+    pub fn fromDecimal128(f: f128) BSONVariant {
+        return .{ .decimal128 = f };
     }
 
     //private methods

@@ -94,7 +94,7 @@ pub fn decode(self: *BsonDocument, reader: *ByteReader) BSONError!void {
 }
 
 pub fn print(self: *const BsonDocument, indent: ?usize) void {
-    std.debug.print("{s} //doc len {d}\n", .{ "{", self.len() });
+    std.debug.print("{s}\n", .{"{"});
     var iv = if (indent) |v| v + 2 else 2;
     for (self.map.keys(), 0..) |key, index| {
         var i: usize = 0;
@@ -104,7 +104,7 @@ pub fn print(self: *const BsonDocument, indent: ?usize) void {
         const value = self.map.get(key).?;
         const tag = @tagName(value);
         const tagValue = @intFromEnum(value);
-        std.debug.print("[0x{x:0>2}] {s} \"{s}\": ", .{ tagValue, tag, key });
+        std.debug.print("[0x{x:0>2}] ({s}) \"{s}\": ", .{ tagValue, tag, key });
         value.print(iv);
         if (index < self.map.count() - 1) {
             std.debug.print(",\n", .{});
@@ -116,5 +116,16 @@ pub fn print(self: *const BsonDocument, indent: ?usize) void {
     while (i < iv) : (i += 1) {
         std.debug.print(" ", .{});
     }
-    std.debug.print("{s} 0x{x:0>2} //EOO\n", .{ "}", EOO });
+    std.debug.print("{s} 0x{x:0>2} //EOO [{d}]\n", .{ "}", EOO, self.len() });
+}
+
+pub fn contains(self: *BsonDocument, key: []const u8) bool {
+    return self.map.contains(key);
+}
+
+pub fn get(self: *BsonDocument, key: []const u8) ?BsonVariant {
+    if (self.map.get(key)) |value| {
+        return value;
+    }
+    @panic("Invalid key");
 }

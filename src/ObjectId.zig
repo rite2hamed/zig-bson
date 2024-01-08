@@ -73,6 +73,7 @@ counter: u24, //3 byte counter in BE
 
 /// toHex - 24 characters hexadecimal representation of the objectid
 pub fn toHex(self: *const ObjectId) []const u8 {
+    //TODO fix the memory leak issue
     var buffer: [24]u8 = undefined;
     const buf = buffer[0..];
     const formatted = std.fmt.bufPrint(buf, "{x}{x:0>6}{x:0>4}{x:0>6}", .{ self.timestamp, self.machineId, self.pid, self.counter }) catch unreachable;
